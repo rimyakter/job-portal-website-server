@@ -29,10 +29,22 @@ async function run() {
       .db("jobPortal")
       .collection("applications");
 
-    // Jobs API || Show all data
+    // Jobs API || Show all data || show specific email query based data
     app.get("/jobs", async (req, res) => {
-      const cursor = jobsCollection.find();
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.hr_email = email;
+      }
+      const cursor = jobsCollection.find(query);
       const result = await cursor.toArray();
+      res.send(result);
+    });
+    //Jobs API || insert one specific data
+
+    app.post("/jobs", async (req, res) => {
+      const jobData = req.body;
+      const result = await jobsCollection.insertOne(jobData);
       res.send(result);
     });
 
@@ -58,6 +70,28 @@ async function run() {
     app.post("/applications", async (req, res) => {
       const application = req.body;
       const result = await applicationCollection.insertOne(application);
+      res.send(result);
+    });
+
+    //find applications for a particular job id
+
+    app.get("/applications/job/:job_id", async (req, res) => {
+      const job_id = req.params.job_id;
+      const query = { jobId: job_id };
+      const result = await applicationCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.patch("/applications/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: req.body.status,
+        },
+      };
+      const result = await applicationCollection.updateOne(filter, updatedDoc);
+
       res.send(result);
     });
 
